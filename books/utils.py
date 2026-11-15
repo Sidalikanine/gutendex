@@ -1,10 +1,13 @@
 import defusedxml.ElementTree as parser
 import re
+from django.utils.dateparse import parse_datetime, parse_date
+from django.utils import timezone
 
 
 LINE_BREAK_PATTERN = re.compile(r'[ \t]*[\n\r]+[ \t]*')
 NAMESPACES = {
     'dc': 'http://purl.org/dc/terms/',
+    'dcterms': 'http://purl.org/dc/terms/',
     'dcam': 'http://purl.org/dc/dcam/',
     'marcrel': 'http://id.loc.gov/vocabulary/relators/',
     'pg': 'http://www.gutenberg.org/2009/pgterms/',
@@ -51,6 +54,8 @@ def get_book(id, xml_file_path):
         'type': None,
         'subjects': [],
         'languages': [],
+        'added_date': None,
+        'update_date': None,
         'formats': {},
         'downloads': None,
         'bookshelves': [],
@@ -137,6 +142,50 @@ def get_book(id, xml_file_path):
         './/{%(dc)s}language//{%(rdf)s}value' % NAMESPACES
     )
     result['languages'] = [language.text for language in languages] or []
+
+    # Added_date
+    book_added_date = book.find(
+        './/{%(dcterms)s}issued' % NAMESPACES
+    )
+    #result['added_date'] = None if book_added_date is None else book_added_date.text
+    if book_added_date is not None and book_added_date.text:
+        parsed_dt = parse_datetime(book_added_date.text)
+        if parsed_dt is not None:
+            # If it's naive, make it timezone-aware using Django's default timezone
+            if timezone.is_naive(parsed_dt):
+                result['added_date'] = timezone.make_aware(parsed_dt)
+            else:
+                result['added_date'] = parsed_dt
+        else:
+            # Fallback if it's just a date string (YYYY-MM-DD) instead of a full datetime
+            parsed_date = parse_date(book_added_date.text)
+            result['added_date'] = timezone.make_aware(
+                datetime.combine(parsed_date, datetime.min.time())
+            ) if parsed_date else None
+    else:
+        result['added_date'] = None
+
+    # Update_date
+    book_update_date = book.find(
+        './/{%(dcterms)s}modified' % NAMESPACES
+    )
+    #result['update_date'] = None if book_update_date is None else book_update_date.text
+    if book_update_date is not None and book_update_date.text:
+        parsed_dt = parse_datetime(book_update_date.text)
+        if parsed_dt is not None:
+            # If it's naive, make it timezone-aware using Django's default timezone
+            if timezone.is_naive(parsed_dt):
+                result['update_date'] = timezone.make_aware(parsed_dt)
+            else:
+                result['update_date'] = parsed_dt
+        else:
+            # Fallback if it's just a date string (YYYY-MM-DD) instead of a full datetime
+            parsed_date = parse_date(book_update_date.text)
+            result['update_date'] = timezone.make_aware(
+                datetime.combine(parsed_date, datetime.min.time())
+            ) if parsed_date else None
+    else:
+        result['update_date'] = None
 
     # Download Count
     download_count = book.find('.//{%(pg)s}downloads' % NAMESPACES)

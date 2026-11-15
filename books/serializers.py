@@ -64,6 +64,8 @@ class BookSerializer(serializers.ModelSerializer):
             'subjects',
             'bookshelves',
             'languages',
+            'added_date',
+            'update_date',
             'copyright',
             'media_type',
             'formats',

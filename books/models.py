@@ -9,6 +9,8 @@ class Book(models.Model):
     editors = models.ManyToManyField("Person", related_name="books_edited")
     gutenberg_id = models.PositiveIntegerField(unique=True)
     languages = models.ManyToManyField('Language')
+    added_date = models.DateTimeField(null=True, blank=True)
+    update_date = models.DateTimeField(null=True, blank=True)
     media_type = models.CharField(max_length=16)
     subjects = models.ManyToManyField('Subject')
     title = models.CharField(blank=True, max_length=1024, null=True)

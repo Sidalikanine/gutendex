@@ -161,6 +161,8 @@ def put_catalog_in_db():
                 book.download_count = data['downloads']
                 book.media_type = data['type']
                 book.title = data['title']
+                book.added_date = data['added_date']
+                book.update_date = data['update_date']
                 book_objects[book_id] = book
 
             bulk_create_in_batches(Book.objects, new_books)
@@ -170,7 +172,7 @@ def put_catalog_in_db():
             for batch_start in range(0, len(updated_books), batch_size):
                 Book.objects.bulk_update(
                     updated_books[batch_start:batch_start + batch_size],
-                    ['copyright', 'download_count', 'media_type', 'title'],
+                    ['copyright', 'download_count', 'media_type', 'title', 'added_date', 'update_date'],
                     batch_size=batch_size
                 )
 
@@ -390,4 +392,4 @@ class Command(BaseCommand):
                 shutil.rmtree(TEMP_PATH)
             raise CommandError(error_message) from error
 
-        send_log_email()
+        # send_log_email()
