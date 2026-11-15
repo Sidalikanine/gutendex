@@ -24,6 +24,8 @@ class BookViewSet(viewsets.ModelViewSet):
             queryset = queryset.order_by('id')
         elif sort == 'descending':
             queryset = queryset.order_by('-id')
+        elif sort == 'latest':
+            queryset = queryset.order_by('-added_date')
         else:
             queryset = queryset.order_by('-download_count')
 
